@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ashoka Mock-Stock | Leaderboard</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:5000 http://localhost:5000 http://0.0.0.0:5000;">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --primary-blue: #004275; 
+            --golden-yellow: #FFD700; 
+            --silver: #C0C0C0;
+            --bronze: #CD7F32;
+            --light-background: #F8F8F0; 
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--light-background);
+            color: #333;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .podium-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        @media (min-width: 768px) {
+            .podium-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+            }
+        }
+
+        .rank-badge {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+            color: white;
+        }
+
+        .gold { background: linear-gradient(45deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255,215,0,0.4); }
+        .silver { background: linear-gradient(45deg, #C0C0C0, #A9A9A9); }
+        .bronze { background: linear-gradient(45deg, #CD7F32, #8B4513); }
+        .standard-rank { background: #e6edf2; color: var(--primary-blue); }
+
+        .price-chip {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        
+        .profit-chip { background-color: #d1fae5; color: #065f46; }
+        .loss-chip { background-color: #fee2e2; color: #991b1b; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .live-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 sm:p-8">
+
+    <div class="max-w-5xl mx-auto mt-4 sm:mt-8">
+        <header class="mb-8 sm:mb-12 text-center">
+            <div class="inline-block px-3 py-1 mb-3 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold tracking-wider uppercase">
+                <span class="live-indicator"></span> Live Market Session
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold mb-2 tracking-tight text-[#004275]">
+                Traders' Hall of Fortune
+            </h1>
+            <p class="text-sm sm:text-base text-gray-500 font-medium italic">"Fortune favors the bold."</p>
+        </header>
+
+        <div id="podium-area" class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12"></div>
+
+        <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
+            <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-white/50">
+                <h2 class="text-lg sm:text-xl font-bold text-[#004275]">Full Rankings</h2>
+                <span class="text-xs text-gray-400 font-medium" id="last-update">Updating live...</span>
+            </div>
+            
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-left border-collapse min-w-[500px]">
+                    <thead>
+                        <tr class="text-xs uppercase tracking-wider text-gray-400 border-b border-gray-100 bg-gray-50/50">
+                            <th class="px-4 sm:px-8 py-3 sm:py-4 font-semibold w-20">Rank</th>
+                            <th class="px-4 sm:px-8 py-3 sm:py-4 font-semibold">Trader</th>
+                            <th class="px-4 sm:px-8 py-3 sm:py-4 text-right font-semibold w-48">Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-list" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION AREA =================
+        const API_HOST = '127.0.0.1'; 
+        const API_PORT = '5000';
+        const API_URL  = `http://${API_HOST}:${API_PORT}/api/leaderboard`;
+        
+        const REFRESH_INTERVAL = 3000;
+        // ======================================================
+
+        async function updateLeaderboard() {
+            try {
+                const response = await fetch(`${API_URL}?t=${Date.now()}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                console.log("Data received:", data);
+                
+                if (Array.isArray(data)) {
+                    renderPodium(data.slice(0, 3));
+                    renderList(data);
+                    updateTimestamp();
+                }
+            } catch (error) {
+                console.error("Leaderboard Sync Failed:", error);
+                document.getElementById('leaderboard-list').innerHTML = `<tr><td colspan="3" class="text-center py-8 text-red-500 font-bold">Error loading data</td></tr>`;
+            }
+        }
+
+        function renderPodium(topThree) {
+            const container = document.getElementById('podium-area');
+            if (!container || !topThree.length) return;
+            
+            const colors = ['gold', 'silver', 'bronze'];
+            const borderColors = { gold: 'border-yellow-400', silver: 'border-slate-300', bronze: 'border-amber-600' };
+
+            let targetOrder = [...topThree];
+            if (window.innerWidth >= 768 && topThree.length === 3) {
+                targetOrder = [topThree[1], topThree[0], topThree[2]]; 
+            }
+
+            container.innerHTML = targetOrder.map((user) => {
+                if (!user) return '';
+                
+                // CALCULATE PROFIT / LOSS DYNAMICALLY
+                const starting = parseFloat(user.starting_cash) || 0;
+                const remaining = parseFloat(user.remaining_cash) || 0;
+                const pnlValue = remaining - starting; 
+                
+                const isProfit = pnlValue >= 0;
+                const rankIndex = user.rank - 1;
+                const colorClass = colors[rankIndex] || 'standard-rank';
+                const borderClass = borderColors[colorClass] || 'border-slate-200';
+
+                return `
+                    <div class="podium-card glass-card p-4 sm:p-6 rounded-2xl text-center border-t-4 ${borderClass} flex sm:block items-center justify-between sm:justify-center gap-4">
+                        <div class="flex sm:block items-center gap-3">
+                            <div class="rank-badge ${colorClass} mx-auto text-sm shrink-0">${user.rank}</div>
+                            <h3 class="font-bold text-gray-800 text-base sm:text-lg truncate max-w-[140px] sm:max-w-none text-left sm:text-center">${user.username}</h3>
+                        </div>
+                        <div class="text-right sm:text-center">
+                            <p class="text-lg sm:text-2xl font-extrabold ${isProfit ? 'text-[#065f46]' : 'text-[#991b1b]'}">
+                                ₹${Math.abs(pnlValue).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                            </p>
+                            <p class="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider font-semibold">Total P/L</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderList(users) {
+            const list = document.getElementById('leaderboard-list');
+            if (!list) return;
+            
+            list.innerHTML = users.map(user => {
+                // CALCULATE PROFIT / LOSS DYNAMICALLY
+                const starting = parseFloat(user.starting_cash) || 0;
+                const remaining = parseFloat(user.remaining_cash) || 0;
+                const pnlValue = remaining - starting;
+
+                const isProfit = pnlValue >= 0;
+                const rankClass = user.rank === 1 ? 'gold' : user.rank === 2 ? 'silver' : user.rank === 3 ? 'bronze' : 'standard-rank';
+                const chipClass = isProfit ? 'profit-chip' : 'loss-chip';
+                const sign = isProfit ? '+' : '-';
+
+                return `
+                    <tr class="hover:bg-gray-50/50 transition-colors border-b border-gray-100">
+                        <td class="px-4 sm:px-8 py-3.5 sm:py-5"><div class="rank-badge ${rankClass} text-sm">${user.rank}</div></td>
+                        <td class="px-4 sm:px-8 py-3.5 sm:py-5"><span class="font-bold text-gray-800 text-sm sm:text-base">${user.username}</span></td>
+                        <td class="px-4 sm:px-8 py-3.5 sm:py-5 text-right">
+                            <span class="price-chip ${chipClass}">
+                                ${sign} ₹${Math.abs(pnlValue).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Window resize event handler safely keeps rendering calculations in parity with viewport updates
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(updateLeaderboard, 150);
+        });
+
+        function updateTimestamp() {
+            const el = document.getElementById('last-update');
+            if (el) el.innerText = `Last update: ${new Date().toLocaleTimeString()}`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateLeaderboard();
+            setInterval(updateLeaderboard, REFRESH_INTERVAL);
+        });
+    </script>
+</body>
+</html>
