@@ -776,6 +776,7 @@ func main() {
 	mux16000.HandleFunc("/api/history", apiUserHistoryMetrics)
 	mux16000.HandleFunc("/api/transaction", recordTransaction)
 	mux16000.HandleFunc("/api/transactions", apiGetTransactions)
+ mux16000.HandleFunc("/api/sync-tpl", syncTotalPL)
 
 	// Static Assets Route Middleware for Port 16000
 	mux16000.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
