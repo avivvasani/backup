@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self'; 
+            script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com; 
+            style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+            font-src https://fonts.gstatic.com; 
+            connect-src 'self' http://127.0.0.1:16000 https://cdn.jsdelivr.net; 
+            frame-src 'self' https://s.tradingview.com https://www.tradingview.com;">
+    <title>Ashoka Mock-Stock | Platform</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
+
+    <style>
+        :root {
+            /* --- TRANSITIONED BRAND BLUE SYSTEM --- */
+            --primary-blue: #004275;
+            --primary-blue-strong: #002d52;
+            --light-background: #edf4f9;
+            --light-border: #d2dee6;
+            --accent-glow: rgba(0, 66, 117, 0.18);
+            --input-border: #bfd0dc;
+            --portfolio-border: rgba(0, 66, 117, 0.12);
+            --button-bg: var(--primary-blue);
+            --link-color: var(--primary-blue);
+            
+            /* --- PRESERVED STABILITY SYSTEM (Financial Prices & Transactions) --- */
+            --primary-green: #0b6b3a; 
+            --golden-yellow: #f4c430;
+            --white-card-background: rgba(255, 255, 255, 0.92);
+            --dark-text: #17211b;
+            --muted-text: #647067;
+            --positive-color: #148a4f;
+            --negative-color: #d64545;
+            --font-family: 'Inter', sans-serif;
+            --flash-positive: rgba(20, 138, 79, 0.12);
+            --flash-negative: rgba(214, 69, 69, 0.12);
+            --input-bg: rgba(255, 255, 255, 0.86);
+            --button-text: #ffffff;
+            --portfolio-bg: rgba(255, 255, 255, 0.72);
+        }
+
+        body {
+            font-family: var(--font-family);
+            background:
+                linear-gradient(135deg, rgba(0, 66, 117, 0.12), transparent 30%),
+                radial-gradient(circle at 88% 8%, rgba(244, 196, 48, 0.18), transparent 24rem),
+                var(--light-background);
+            color: var(--dark-text);
+            margin: 0;
+            padding: 2.5rem;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .container {
+            width: 97%;
+            max-width: 1680px;
+            background-color: var(--white-card-background);
+            backdrop-filter: blur(18px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            box-shadow: 0 24px 70px rgba(23, 33, 27, 0.12);
+            padding: 3rem;
+            margin-top: 5.5rem;
+            margin-bottom: 2.5rem;
+            animation: fadeIn 0.45s ease-in-out;
+            transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-blue);
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0.9rem;
+            font-weight: 800;
+            font-size: 2.75rem;
+            letter-spacing: 0;
+            transition: color 0.5s ease, border-color 0.5s ease;
+        }
+
+        .intro-text {
+            text-align: center;
+            margin: 0 auto 2.4rem;
+            max-width: 860px;
+            font-size: 1.08rem;
+            line-height: 1.6;
+            color: var(--muted-text);
+            transition: color 0.5s ease;
+        }
+
+        .market-controls {
+            display: grid;
+            grid-template-columns: minmax(320px, 440px) 1fr;
+            gap: 1.6rem;
+            align-items: start;
+            margin-bottom: 2.2rem;
+        }
+
+        .search-panel { display: flex; flex-direction: column; gap: 0.9rem; }
+
+        .search-box {
+            width: 100%;
+            padding: 15px 17px;
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: var(--dark-text);
+            font-size: 1.02rem;
+            font-weight: 600;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(0, 66, 117, 0.11);
+        }
+        
+        .category-filter {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 11px;
+            margin-bottom: 0;
+            animation: slideIn 0.45s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .category-button {
+            background-color: var(--white-card-background);
+            color: #334138;
+            border: 1px solid var(--light-border);
+            padding: 10px 18px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .category-button:hover { background-color: var(--light-background); border-color: var(--primary-blue); }
+        
+        .category-button.active {
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            border-color: var(--primary-blue);
+            transform: translateY(-1px);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .watchlist-shortcut {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 16px;
+            border: 1px solid rgba(0, 66, 117, 0.18);
+            border-radius: 13px;
+            background: rgba(0, 66, 117, 0.08);
+            color: var(--primary-blue);
+            cursor: pointer;
+            font-size: 0.96rem;
+            font-weight: 800;
+            transition: all 0.25s ease;
+        }
+
+        .watchlist-shortcut:hover, .watchlist-shortcut.active {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .watchlist-count { font-size: 0.82rem; opacity: 0.82; }
+
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.55rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .stock-item {
+            background-color: var(--white-card-background);
+            border: 1px solid rgba(221, 230, 223, 0.9);
+            border-radius: 16px;
+            padding: 1.7rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, 
+                        box-shadow 0.4s ease-in-out, 
+                        border-color 0.4s ease-in-out;
+        }
+
+        .glow-positive {
+            border-color: #148a4f;
+            box-shadow: inset 0 0 10px rgba(20, 138, 79, 0.15), 
+                        0 0 10px rgba(20, 138, 79, 0.1);
+        }
+
+        .glow-negative {
+            border-color: #d64545;
+            box-shadow: inset 0 0 10px rgba(214, 69, 69, 0.15), 
+                        0 0 10px rgba(214, 69, 69, 0.1);
+        }
+        
+        .stock-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 36px rgba(23, 33, 27, 0.09);
+            border-color: rgba(0, 66, 117, 0.18);
+        }
+
+        .stock-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.55rem; }
+        .stock-name { font-weight: 600; font-size: 1.18rem; color: var(--dark-text); }
+        .stock-symbol {
+            font-size: 0.76rem; font-weight: 700; color: var(--primary-blue);
+            background-color: rgba(0, 66, 117, 0.09); padding: 6px 11px; border-radius: 999px;
+        }
+
+        .stock-price-container {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            cursor: pointer; transition: transform 0.2s ease-in-out; flex-grow: 1; margin-bottom: 1.25rem;
+        }
+        .stock-price-container:hover { transform: scale(1.01); }
+        .stock-price { font-size: 2.25rem; font-weight: 800; line-height: 1; }
+
+        .holding-strip {
+            display: flex; justify-content: space-between; gap: 0.55rem;
+            margin: 0 0 0.8rem; padding: 0.8rem 0.9rem; border-radius: 12px;
+            background: rgba(0, 66, 117, 0.06); color: var(--muted-text); font-size: 0.82rem; font-weight: 800;
+        }
+
+        .positive { color: var(--positive-color); }
+        .negative { color: var(--negative-color); }
+        .change-value { font-size: 1rem; font-weight: 800; line-height: 1.2; }
+        .hidden { display: none !important; }
+
+        .add-to-watchlist-btn, .buy-btn, .sell-btn, .max-btn, .export-btn {
+            background-color: var(--golden-yellow); color: var(--dark-text);
+            border: none; padding: 8px 13px; border-radius: 10px; cursor: pointer;
+            font-size: 0.9rem; font-weight: 700; transition: all 0.3s ease; z-index: 11;
+        }
+
+        .add-to-watchlist-btn:hover, .buy-btn:hover, .sell-btn:hover, .max-btn:hover, .export-btn:hover {
+            transform: translateY(-2px); filter: brightness(0.95);
+        }
+
+        .add-to-watchlist-btn.added { background-color: var(--primary-blue); color: #ffffff; }
+        .buy-btn { background-color: var(--positive-color); color: #ffffff; }
+        .sell-btn { background-color: var(--negative-color); color: #ffffff; }
+        .max-btn { background-color: #6c757d; color: #ffffff; flex-shrink: 0; padding: 8px 12px; font-size: 0.85rem; }
+        .export-btn { background-color: #17a2b8; color: #ffffff; }
+
+        .stock-actions { display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 1rem; gap: 0.75rem; }
+
+        /* Top Bar */
+        .top-bar {
+            position: absolute; top: 1rem; left: 1rem; right: 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; flex-wrap: wrap; gap: 1rem; padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.72); border-radius: 16px;
+            background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(16px);
+            box-shadow: 0 14px 40px rgba(23, 33, 27, 0.1);
+        }
+
+        .top-bar .group { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        
+        .nav-button {
+            background-color: var(--white-card-background); color: var(--dark-text);
+            border: 1px solid var(--light-border); padding: 9px 16px; border-radius: 10px;
+            cursor: pointer; font-size: 0.95rem; font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .nav-button:hover {
+            background-color: var(--light-background); border-color: var(--primary-blue); transform: translateY(-2px);
+        }
+
+        .nav-button.active {
+            background-color: var(--primary-blue); color: #ffffff;
+            border-color: var(--primary-blue); box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        /* Auth/Login */
+        .auth-container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; width: 100vw; padding: 2rem; box-sizing: border-box; position: absolute; top: 0; left: 0;
+            background: inherit; z-index: 1000;
+        }
+
+        .auth-card {
+            background-color: var(--white-card-background); backdrop-filter: blur(12px);
+            padding: 3.5rem 3rem; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.75);
+            box-shadow: 0 30px 80px rgba(23, 33, 27, 0.15); width: 100%; max-width: 460px; text-align: center;
+        }
+
+        .auth-card h2 { color: var(--primary-blue); margin-bottom: 0.5rem; font-size: 2.2rem; font-weight: 800; }
+        .auth-card p.subtitle { color: var(--muted-text); font-size: 0.95rem; margin-bottom: 2.5rem; font-weight: 500; }
+
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .form-group label { display: block; margin-bottom: 0.6rem; color: var(--dark-text); font-weight: 700; font-size: 0.9rem; text-transform: uppercase; }
+        .form-group input {
+            width: 100%; padding: 14px 18px; border: 1px solid var(--input-border); border-radius: 12px;
+            font-size: 1rem; font-weight: 500; background-color: var(--input-bg); color: var(--dark-text); transition: all 0.25s ease;
+        }
+        .form-group input:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 4px var(--accent-glow); }
+
+        .auth-button {
+            width: 100%; padding: 15px 20px; background-color: var(--button-bg); color: var(--button-text);
+            border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 8px 24px rgba(0, 66, 117, 0.25); margin-top: 1rem;
+        }
+
+        .auth-button:hover { background-color: var(--primary-blue-strong); transform: translateY(-2px); }
+        .auth-message { margin-top: 2rem; font-size: 0.95rem; font-weight: 500; }
+        .auth-message a { color: var(--link-color); text-decoration: none; font-weight: 700; }
+        .auth-message a:hover { text-decoration: underline; }
+        .error-message { color: var(--negative-color); margin-top: 1.2rem; font-size: 0.95rem; font-weight: 600; display: none; }
+
+        .user-id-display {
+            font-size: 0.85rem; color: var(--dark-text); background-color: var(--white-card-background);
+            padding: 8px 12px; border-radius: 10px; border: 1px solid var(--light-border);
+        }
+        .user-id-display strong { color: var(--primary-blue); }
+
+        /* Portfolio Components */
+        .portfolio-summary {
+            background-color: var(--portfolio-bg); border: 1px solid var(--portfolio-border);
+            border-radius: 14px; padding: 1rem; margin-bottom: 1.4rem; display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;
+        }
+
+        .portfolio-item {
+            text-align: center; padding: 0.9rem; border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.74); border: 1px solid rgba(221, 230, 223, 0.75);
+        }
+
+        .portfolio-item h3 { margin: 0 0 0.5rem; font-size: 0.78rem; color: var(--muted-text); font-weight: 800; text-transform: uppercase; }
+        .portfolio-value { font-size: 1.55rem; font-weight: 800; color: var(--dark-text); }
+        
+        .portfolio-value.positive { color: var(--positive-color); }
+        .portfolio-value.negative { color: var(--negative-color); }
+
+        /* Analytics Specific Components */
+        .analytics-card {
+            background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(221, 230, 223, 0.8);
+            border-radius: 16px; transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .analytics-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(23, 33, 27, 0.06); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--light-border); border-radius: 999px; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6);
+            display: flex; justify-content: center; align-items: center; z-index: 1000;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: var(--white-card-background); 
+            padding: 2rem; 
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); 
+            width: 90%; 
+            max-width: 400px; 
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .modal-content .form-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            width: 100%; 
+        }
+
+        .modal-overlay.active .modal-content { transform: translateY(0); opacity: 1; }
+        .modal-content h3 { color: var(--primary-blue); margin-bottom: 1.5rem; font-size: 1.8rem; }
+
+        .modal-content .form-group input[type="number"] { 
+            flex-grow: 1; 
+            min-width: 0;
+            padding: 12px;
+        }
+
+        .modal-buttons { margin-top: 2rem; display: flex; justify-content: center; gap: 15px; }
+        .modal-buttons button { padding: 10px 25px; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .confirm-btn { background-color: var(--positive-color); color: #ffffff; border: none; }
+        .cancel-btn { background-color: #cccccc; color: var(--dark-text); border: 1px solid #999999; }
+        .modal-message { margin-top: 1rem; color: var(--negative-color); font-weight: 600; }
+
+        @media (max-width: 768px) {
+            body { padding: 0.8rem; }
+            .container { padding: 1.2rem; }
+            .stock-info { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .stock-grid { grid-template-columns: 1fr; }
+            .top-bar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .top-bar .group { width: 100%; justify-content: flex-start; }
+            .portfolio-summary { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div id="top-bar" class="top-bar hidden">
+        <div class="group left-group">
+            <div class="user-id-display">
+                <strong>User:</strong> <span id="user-id-display-text"></span>
+            </div>
+        </div>
+        <div class="group center-group mx-auto">
+            <button id="tab-trading" class="nav-button active" onclick="switchTab('trading')">Trading Market</button>
+            <button id="tab-analytics" class="nav-button" onclick="switchTab('analytics')">Analytics Hub</button>
+        </div>
+        <div class="group right-group">
+            <button id="export-portfolio-button" class="export-btn">Export Portfolio</button>
+            <button id="logout-button" class="nav-button bg-red-500 text-white hover:bg-red-600 border-red-500 hover:border-red-600">Logout</button>
+        </div>
+    </div>
+
+    <div id="login-page" class="auth-container">
+        <div class="auth-card">
+            <h2>Welcome Back!</h2>
+            <p class="subtitle">Log in to manage your stocks portfolio</p>
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="••••••••">
+            </div>
+            <button id="login-button" class="auth-button">Sign In</button>
+            <p id="login-error" class="error-message"></p>
+            <p class="auth-message">Or <a href="#" id="anonymous-sign-in">Continue as Guest</a></p>
+        </div>
+    </div>
+
+    <div id="trading-section" class="container hidden">
+        <h1 class="text-3xl font-bold text-[#004275] mb-6 text-center">
+            Ashoka Universal School <br/> Mock-Stock Competition
+        </h1>
+        <p class="intro-text">
+            Welcome to the Live Mock-Stock Market. Prices update every 5 seconds!
+        </p>
+
+        <section class="portfolio-summary">
+            <div class="portfolio-item">
+                <h3>Cash Balance</h3>
+                <p id="portfolio-cash" class="portfolio-value">₹0.00</p>
+            </div>
+            <div class="portfolio-item">
+                <h3>Total Invested</h3>
+                <p id="portfolio-invested" class="portfolio-value">₹0.00</p>
+            </div>
+            <div class="portfolio-item">
+                <h3>Current Value</h3>
+                <p id="portfolio-current-value" class="portfolio-value">₹0.00</p>
+            </div>
+            <div class="portfolio-item">
+                <h3>Overall P/L</h3>
+                <p id="portfolio-overall-profit-loss" class="portfolio-value">₹0.00</p>
+            </div>
+            <div class="portfolio-item">
+                <h3>Total P/L</h3>
+                <p id="portfolio-total-profit-loss" class="portfolio-value">₹0.00</p>
+            </div>
+        </section>
+
+        <div class="market-controls">
+            <div class="search-panel">
+                <input id="stock-search-input" class="search-box" type="search" placeholder="Search stocks or categories" autocomplete="off">
+                <button id="watchlist-filter-button" class="watchlist-shortcut" type="button">
+                    <span>Watchlist</span>
+                    <span id="watchlist-count" class="watchlist-count">0 saved</span>
+                </button>
+            </div>
+            <div id="category-filter-trader" class="category-filter"></div>
+        </div>
+        
+        <main id="stock-market-container-trader">
+            <ul id="stock-grid-trader" class="stock-grid"></ul>
+        </main>
+    </div>
+
+    <div id="analytics-section" class="container hidden">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-[#004275] tracking-tight mb-2">
+                Ashoka Universal School <br/> Performance Analytics Hub
+            </h1>
+            <p class="intro-text">
+                Real-time execution breakdowns, strategic asset weights, performance streams, and total returns auditing.
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+            <div class="analytics-card p-5 text-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Cash Balance</span>
+                <p id="kpi-cash" class="text-2xl font-extrabold text-gray-800">₹0.00</p>
+            </div>
+            <div class="analytics-card p-5 text-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Total Invested</span>
+                <p id="kpi-invested" class="text-2xl font-extrabold text-gray-800">₹0.00</p>
+            </div>
+            <div class="analytics-card p-5 text-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Current Value</span>
+                <p id="kpi-current" class="text-2xl font-extrabold text-gray-800">₹0.00</p>
+            </div>
+            <div class="analytics-card p-5 text-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Overall P/L</span>
+                <p id="kpi-overall" class="text-2xl font-extrabold">₹0.00</p>
+            </div>
+            <div class="analytics-card p-5 text-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Total Realized P/L</span>
+                <p id="kpi-realized" class="text-2xl font-extrabold">₹0.00</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="analytics-card p-6 lg:col-span-1 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Asset Allocation Mix</h3>
+                    <p class="text-sm text-gray-400 mb-6">Current breakdown percentage of portfolio asset weighting.</p>
+                </div>
+                <div class="relative max-w-[240px] mx-auto w-full my-auto">
+                    <canvas id="allocationChart"></canvas>
+                </div>
+                <div id="no-assets-message" class="text-center py-6 text-sm text-gray-400 font-medium">
+                    No active positions found to chart.
+                </div>
+            </div>
+
+            <div class="analytics-card p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-1">Profit Vector Timeline</h3>
+                        <p class="text-sm text-gray-400">Chronological graph showing historical realized trade payouts.</p>
+                    </div>
+                    <span class="text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full">Performance Grid</span>
+                </div>
+                <div class="w-full h-[280px] relative">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-card p-6">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Transaction History Log</h3>
+                    <p class="text-sm text-gray-400">Immutable structural history logs for your matched account profile.</p>
+                </div>
+                <div class="text-xs font-semibold px-3 py-1.5 bg-gray-100 rounded-lg text-gray-600 border border-gray-200">
+                    Total Volume: <span id="trade-count" class="font-bold text-gray-900">0 trades</span>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-gray-400 text-xs font-bold uppercase tracking-wider">
+                            <th class="pb-3 font-semibold">Timestamp</th>
+                            <th class="pb-3 font-semibold">Stock ID</th>
+                            <th class="pb-3 font-semibold">Type</th>
+                            <th class="pb-3 font-semibold">Quantity</th>
+                            <th class="pb-3 font-semibold">Execution Price</th>
+                            <th class="pb-3 text-right font-semibold">P/L Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-log-rows" class="divide-y divide-gray-100 text-gray-700 font-medium"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="transaction-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title" class="modal-title"></h3>
+            <p id="modal-stock-info" class="text-lg font-semibold mb-2"></p>
+            <p id="modal-shares-owned" class="text-sm text-gray-600 mb-4"></p> 
+            <div class="form-group">
+                <label for="quantity-input">Quantity:</label>
+                <input type="number" id="quantity-input" min="1" value="1">
+                <button id="max-quantity-button" class="max-btn">Max</button>
+            </div>
+            <p id="modal-message" class="modal-message"></p>
+            <div class="modal-buttons">
+                <button id="confirm-transaction-button" class="confirm-btn"></button>
+                <button id="cancel-transaction-button" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openChartPopup(symbol) {
+            ipcRenderer.send('open-chart-window', symbol);
+        }
+        // --- Complete NSE Ticker to Corporate Name Directory ---
+        const NSE_COMPANY_NAMES = {
+            // Auto Ancillaries
+            "BHARATFORG": "Bharat Forge Ltd.", "CIEINDIA": "CIE Automotive India Ltd.", "CRAFTSMAN": "Craftsman Automation Ltd.", "ENDURANCE": "Endurance Technologies Ltd.", "EXIDEIND": "Exide Industries Ltd.", "FIEMIND": "Fiem Industries Ltd.", "GABRIEL": "Gabriel India Ltd.", "JAMNAAUTO": "Jamna Auto Industries Ltd.", "LUMAXIND": "Lumax Industries Ltd.", "RKFORGE": "Ramkrishna Forgings Ltd.", "SONACOMS": "Sona BLW Precision Forgings", "SUBROS": "Subros Ltd.", "SUPRAJIT": "Suprajit Engineering Ltd.", "UNOMINDA": "Uno Minda Ltd.", "VARROC": "Varroc Engineering Ltd.",
+            // Automobiles - OEMs
+            "ASHOKLEY": "Ashok Leyland Ltd.", "BAJAJ-AUTO": "Bajaj Auto Ltd.", "EICHERMOT": "Eicher Motors Ltd.", "FORCEMOT": "Force Motors Ltd.", "HEROMOTOCO": "Hero MotoCorp Ltd.", "M&M": "Mahindra & Mahindra Ltd.", "MARUTI": "Maruti Suzuki India Ltd.", "OLECTRA": "OLECTRA Greentech Ltd.", "TVSMOTOR": "TVS Motor Company Ltd.",
+            // Banking
+            "AXISBANK": "Axis Bank Ltd.", "BANDHANBNK": "Bandhan Bank Ltd.", "BANKBARODA": "Bank of Baroda", "BANKINDIA": "Bank of India", "CANBK": "Canara Bank", "CENTRALBK": "Central Bank of India", "CSBBANK": "CSB Bank Ltd.", "CUB": "City Union Bank Ltd.", "DCBBANK": "DCB Bank Ltd.", "DHANBANK": "Dhanlaxmi Bank Ltd.", "ESAFSFB": "ESAF Small Finance Bank", "FEDERALBNK": "The Federal Bank Ltd.", "HDFCBANK": "HDFC Bank Ltd.", "ICICIBANK": "ICICI Bank Ltd.", "IDBI": "IDBI Bank Ltd.", "IDFCFIRSTB": "IDFC First Bank Ltd.", "INDIANB": "Indian Bank", "INDUSINDBK": "IndusInd Bank Ltd.", "IOB": "Indian Overseas Bank", "J&KBANK": "Jammu & Kashmir Bank Ltd.", "KARURVYSYA": "Karur Vysya Bank Ltd.", "KOTAKBANK": "Kotak Mahindra Bank Ltd.", "MAHABANK": "Bank of Maharashtra", "PNB": "Punjab National Bank", "PSB": "Punjab & Sind Bank", "RBLBANK": "RBL Bank Ltd.", "SBIN": "State Bank of India", "SOUTHBANK": "The South Indian Bank Ltd.", "SURYODAY": "Suryoday Small Finance Bank", "UCOBANK": "UCO Bank", "UNIONBANK": "Union Bank of India", "UTKARSHBNK": "Utkarsh Small Finance Bank", "YESBANK": "Yes Bank Ltd.",
+            // Beverages & Distilleries
+            "ASAL": "Associated Alcohols & Breweries", "GLOBUSSPR": "Globus Spirits Ltd.", "RADICO": "Radico Khaitan Ltd.", "SULA": "Sula Vineyards Ltd.", "TI": "Tilaknagar Industries Ltd.", "UBL": "United Breweries Ltd.", "VBL": "Varun Beverages Ltd.",
+            // Capital Goods & Industrial
+            "ABB": "ABB India Ltd.", "AIAENG": "AIA Engineering Ltd.", "BHEL": "Bharat Heavy Electricals Ltd.", "CUMMINSIND": "Cummins India Ltd.", "ELGIEQUIP": "Elgi Equipments Ltd.", "HAVELLS": "Havells India Ltd.", "KEI": "KEI Industries Ltd.", "KIRLOSENG": "Kirloskar Oil Engines Ltd.", "LT": "Larsen & Toubro Ltd.", "POLYCAB": "Polycab India Ltd.", "SIEMENS": "Siemens Ltd.", "SKFINDIA": "SKF India Ltd.", "THERMAX": "Thermax Ltd.", "TRITURBINE": "Triveni Turbine Ltd.", "VOLTAS": "Voltas Ltd.",
+            // Cement & Building Materials
+            "ACC": "ACC Ltd.", "AMBUJACEM": "Ambuja Cements Ltd.", "DALBHARAT": "Dalmia Bharat Ltd.", "HEIDELBERG": "HeidelbergCement India Ltd.", "INDIACEM": "The India Cements Ltd.", "JKCEMENT": "JK Cement Ltd.", "ORIENTCEM": "Orient Cement Ltd.", "PRSMJOHNSN": "Prism Johnson Ltd.", "RAMCOCEM": "The Ramco Cements Ltd.", "SAGCEM": "Sagar Cements Ltd.", "SHREECEM": "Shree Cement Ltd.", "STARCEMENT": "Star Cement Ltd.", "ULTRACEMCO": "UltraTech Cement Ltd.",
+            // Chemicals
+            "AARTIIND": "Aarti Industries Ltd.", "ATUL": "Atul Ltd.", "BAYERCROP": "Bayer CropScience Ltd.", "CHAMBLFERT": "Chambal Fertilisers & Chemicals", "CLEAN": "Clean Science & Technology", "COROMANDEL": "Coromandel International", "DEEPAKNTR": "Deepak Nitrite Ltd.", "FACT": "Fertilisers & Chemicals Travancore", "FINEORG": "Fine Organic Industries", "FLUOROCHEM": "Gujarat Fluorochemicals Ltd.", "GNFC": "Gujarat Narmada Valley Fertilizers", "GSFC": "Gujarat State Fertilizers & Chemicals", "GUJALKALI": "Gujarat Alkalies & Chemicals", "MADRASFERT": "Madras Fertilizers Ltd.", "NAVINFLUOR": "Navin Fluorine International", "NOCIL": "NOCIL Ltd.", "PIIND": "PI Industries Ltd.", "RCF": "Rashtriya Chemicals & Fertilizers", "ROSSARI": "Rossari Biotech Ltd.", "SHARDACROP": "Sharda Cropchem Ltd.", "SPIC": "Southern Petrochemical Industries", "SRF": "SRF Ltd.", "SUDARSCHEM": "Sudarshan Chemical Industries", "SUMICHEM": "Sumitomo Chemical India Ltd.", "TATACHEM": "Tata Chemicals Ltd.", "UPL": "UPL Ltd.", "VINATIORGA": "Vinati Organics Ltd.",
+            // Construction & Infrastructure
+            "ASHOKA": "Ashoka Buildcon Ltd.", "ENGINERSIN": "Engineers India Ltd.", "GPIL": "Godawari Power & Ispat Ltd.", "KNRCON": "KNR Constructions Ltd.", "NBCC": "NBCC (India) Ltd.", "NCC": "NCC Ltd.", "PATELENG": "Patel Engineering Ltd.", "PNCINFRA": "PNC Infratech Ltd.", "RKEC": "RKEC Projects Ltd.",
+            // Consumer D&E
+            "AMBER": "Amber Enterprises India Ltd.", "BAJAJELEC": "Bajaj Electricals Ltd.", "BLUESTARCO": "Blue Star Ltd.", "CROMPTON": "Crompton Greaves Consumer Electricals", "DIXON": "Dixon Technologies (India) Ltd.", "KAYNES": "Kaynes Technology India", "ORIENTELEC": "Orient Electric Ltd.", "SYRMA": "Syrma SGS Technology Ltd.", "WHIRLPOOL": "Whirlpool of India Ltd.",
+            // Consumer R&S
+            "ABFRL": "Aditya Birla Fashion and Retail Ltd.", "DELHIVERY": "Delhivery Ltd.", "DMART": "Avenue Supermarts Ltd. (DMart)", "ETHOSLTD": "Ethos Ltd.", "HONASA": "Honasa Consumer Ltd. (Mamaearth)", "KALYANKJIL": "Kalyan Jewellers India Ltd.", "MAPMYINDIA": "C.E. Info Systems Ltd. (MapmyIndia)", "NYKAA": "FSN E-Commerce Ventures Ltd. (Nykaa)", "PAYTM": "One 97 Communications Ltd. (Paytm)", "POLICYBZR": "PB Fintech Ltd. (Policybazaar)", "SENCO": "Senco Gold Ltd.", "TITAN": "Titan Company Ltd.", "TRENT": "Trent Ltd.",
+            // Defense & Shipbuilding
+            "ASTRAZEN": "AstraZeneca Pharma India Ltd.", "BDL": "Bharat Dynamics Ltd.", "BEL": "Bharat Electronics Ltd.", "BEML": "BEML Ltd.", "COCHINSHIP": "Cochin Shipyard Ltd.", "DCXINDIA": "DCX Systems Ltd.", "GRSE": "Garden Reach Shipbuilders & Engineers", "HAL": "Hindustan Aeronautics Ltd.", "IDEAFORGE": "ideaForge Technology Ltd.", "MAZDOCK": "Mazagon Dock Shipbuilders Ltd.", "MTARTECH": "MTAR Technologies Ltd.", "PARAS": "Paras Defence & Space Technologies",
+            // Energy
+            "ADANIGREEN": "Adani Green Energy Ltd.", "ADANIPOWER": "Adani Power Ltd.", "BORORENEW": "Borosil Renewables Ltd.", "BPCL": "Bharat Petroleum Corporation Ltd.", "CHENNPETRO": "Chennai Petroleum Corporation Ltd.", "CONFIPET": "Confidence Petroleum India Ltd.", "GAIL": "GAIL (India) Ltd.", "GENSOL": "Gensol Engineering Ltd.", "GREENPANEL": "Greenpanel Industries Ltd.", "GSPL": "Gujarat State Petronet Ltd.", "GUJGASLTD": "Gujarat Gas Ltd.", "GULFPETRO": "GP Petroleums Ltd.", "HINDPETRO": "Hindustan Petroleum Corporation Ltd.", "IGL": "Indraprastha Gas Ltd.", "IOC": "Indian Oil Corporation Ltd.", "IREDA": "Indian Renewable Energy Development Agency", "JPPOWER": "Jaiprakash Power Ventures Ltd.", "JSWENERGY": "JSW Energy Ltd.", "MGL": "Mahanagar Gas Ltd.", "MRPL": "Mangalore Refinery & Petrochemicals Ltd.", "NHPC": "NHPC Ltd.", "NTPC": "NTPC Ltd.", "OIL": "Oil India Ltd.", "ONGC": "Oil & Natural Gas Corporation Ltd.", "PETRONET": "Petronet LNG Ltd.", "POWERGRID": "Power Grid Corporation of India Ltd.", "SJVN": "SJVN Ltd.", "SUZLON": "Suzlon Energy Ltd.", "TATAPOWER": "Tata Power Company Ltd.", "TORNTPOWER": "Torrent Power Ltd.",
+            // FMCG
+            "AWL": "Adani Wilmar Ltd.", "BRITANNIA": "Britannia Industries Ltd.", "COLPAL": "Colgate-Palmolive (India) Ltd.", "DABUR": "Dabur India Ltd.", "DODLA": "Dodla Dairy Ltd.", "GODREJCP": "Godrej Consumer Products Ltd.", "HATSUN": "Hatsun Agro Product Ltd.", "HERITGFOOD": "Heritage Foods Ltd.", "HINDUNILVR": "Hindustan Unilever Ltd.", "ITC": "ITC Ltd.", "JYOTHYLAB": "Jyothy Labs Ltd.", "MARICO": "Marico Ltd.", "NESTLEIND": "Nestle India Ltd.", "PGHH": "Procter & Gamble Hygiene and Health Care", "TATACONSUM": "Tata Consumer Products Ltd.", "VIJAYA": "Vijaya Diagnostic Centre Ltd.",
+            // Finance
+            "5PAISA": "5paisa Capital Ltd.", "AAVAS": "Aavas Financiers Ltd.", "ABSLAMC": "Aditya Birla Sun Life AMC Ltd.", "ANGELONE": "Angel One Ltd.", "BAJAJFINSV": "Bajaj Finserv Ltd.", "BAJFINANCE": "Bajaj Finance Ltd.", "BSE": "BSE Ltd.", "CAMS": "Computer Age Management Services Ltd.", "CANFINHOME": "Can Fin Homes Ltd.", "CDSL": "Central Depository Services (India) Ltd.", "CHOLAFIN": "Cholamandalam Investment & Finance Co.", "CREDITACC": "CreditAccess Grameen Ltd.", "GEOJITFSL": "Geojit Financial Services Ltd.", "GICRE": "General Insurance Corporation of India", "HDFCAMC": "HDFC Asset Management Company Ltd.", "HDFCLIFE": "HDFC Life Insurance Company Ltd.", "HOMEFIRST": "Home First Finance Company India Ltd.", "HUDCO": "Housing & Urban Development Corporation", "ICICIGI": "ICICI Lombard General Insurance Co.", "ICICIPRULI": "ICICI Prudential Life Insurance Co.", "IEX": "Indian Energy Exchange Ltd.", "IFCI": "IFCI Ltd.", "KFINTECH": "KFin Technologies Ltd.", "LICHSGFIN": "LIC Housing Finance Ltd.", "M&MFIN": "Mahindra & Mahindra Financial Services", "MANAPPURAM": "Manappuram Finance Ltd.", "MASFIN": "MAS Financial Services Ltd.", "MCX": "Multi Commodity Exchange of India Ltd.", "MUTHOOTFIN": "Muthoot Finance Ltd.", "NAM-INDIA": "Nippon Life India Asset Management Ltd.", "NIACL": "The New India Assurance Company Ltd.", "PFC": "Power Finance Corporation Ltd.", "POONAWALLA": "Poonawalla Fincorp Ltd.", "RECLTD": "REC Ltd.", "SATIN": "Satin Creditcare Network Ltd.", "SBILIFE": "SBI Life Insurance Company Ltd.", "SHRIRAMFIN": "Shriram Finance Ltd.", "UFLEX": "Uflex Ltd.", "UTIAMC": "UTI Asset Management Company Ltd.",
+            // Healthcare & Diagnostics
+            "APOLLOHOSP": "Apollo Hospitals Enterprise Ltd.", "ASTERDM": "Aster DM Healthcare Ltd.", "FORTIS": "Fortis Healthcare Ltd.", "GLOBAL": "Global Health Ltd. (Medanta)", "KIMS": "Krishna Institute of Medical Sciences Ltd.", "LALPATHLAB": "Dr. Lal PathLabs Ltd.", "MAXHEALTH": "Max Healthcare Institute Ltd.", "MEDANTA": "Global Health Ltd. (Medanta)", "METROPOLIS": "Metropolis Healthcare Ltd.", "RAINBOW": "Rainbow Children's Medicare Ltd.", "SHALBY": "Shalby Ltd.", "THYROCARE": "Thyrocare Technologies Ltd.",
+            // Hospitality & Tourism
+            "CHALET": "Chalet Hotels Ltd.", "EASEMYTRIP": "Easy Trip Planners Ltd. (EaseMyTrip)", "EIHOTEL": "EIH Ltd. (Oberoi Hotels)", "INDHOTEL": "The Indian Hotels Company Ltd. (Taj)", "ITDC": "India Tourism Development Corporation Ltd.", "LEMONTREE": "Lemon Tree Hotels Ltd.", "SPECIALITY": "Speciality Restaurants Ltd.", "TAJGVK": "TAJGVK Hotels & Resorts Ltd.",
+            // IT - SmallCap & Specialized
+            "63MOONS": "63 Moons Technologies Ltd.", "DSSL": "Dynacons Systems & Solutions Ltd.", "HAPPSTMNDS": "Happiest Minds Technologies Ltd.", "INTELLECT": "Intellect Design Arena Ltd.", "KELLTONTEC": "Kellton Tech Solutions Ltd.", "NELCO": "Nelco Ltd.", "NETWEB": "Netweb Technologies India Ltd.", "NEWGEN": "Newgen Software Technologies Ltd.", "RAMCOSYS": "Ramco Systems Ltd.", "ROUTE": "Route Mobile Ltd.", "SAKSOFT": "Saksoft Ltd.", "TANLA": "Tanla Platforms Ltd.", "VALIANTORG": "Valiant Organics Ltd.",
+            // IT - Tier 1 & 2
+            "BSOFT": "Birlasoft Ltd.", "COFORGE": "Coforge Ltd.", "CYIENT": "Cyient Ltd.", "HCLTECH": "HCL Technologies Ltd.", "INFY": "Infosys Ltd.", "KPITTECH": "KPIT Technologies Ltd.", "LTTS": "L&T Technology Services Ltd.", "MASTEK": "Mastek Ltd.", "MPHASIS": "Mphasis Ltd.", "OFSS": "Oracle Financial Services Software Ltd.", "PERSISTENT": "Persistent Systems Ltd.", "SONATSOFTW": "Sonata Software Ltd.", "TATAELXSI": "Tata Elxsi Ltd.", "TCS": "Tata Consultancy Services Ltd.", "TECHM": "Tech Mahindra Ltd.", "WIPRO": "Wipro Ltd.", "ZENSARTECH": "Zensar Technologies Ltd.",
+            // Metals
+            "APLAPOLLO": "APL Apollo Tubes Ltd.", "COALINDIA": "Coal India Ltd.", "ELECTCAST": "Electrosteel Castings Ltd.", "HINDALCO": "Hindalco Industries Ltd.", "HINDCOPPER": "Hindustan Copper Ltd.", "HINDZINC": "Hindustan Zinc Ltd.", "JINDALSTEL": "Jindal Steel & Power Ltd.", "JSL": "Jindal Stainless Ltd.", "JSWSTEEL": "JSW Steel Ltd.", "KIOCL": "KIOCL Ltd.", "MIDHANI": "Mishra Dhatu Nigam Ltd.", "MOIL": "MOIL Ltd.", "NATIONALUM": "National Aluminium Company Ltd.", "NMDC": "NMDC Ltd.", "RATNAMANI": "Ratnamani Metals & Tubes Ltd.", "SAIL": "Steel Authority of India Ltd.", "SUNFLAG": "Sunflag Iron & Steel Company Ltd.", "TATASTEEL": "Tata Steel Ltd.", "VEDL": "Vedanta Ltd.", "WELCORP": "Welspun Corp Ltd.",
+            // Pharmaceuticals
+            "ABBOTINDIA": "Abbott India Ltd.", "ALKEM": "Alkem Laboratories Ltd.", "AUROPHARMA": "Aurobindo Pharma Ltd.", "BIOCON": "Biocon Ltd.", "CIPLA": "Cipla Ltd.", "DIVISLAB": "Divi's Laboratories Ltd.", "DRREDDY": "Dr. Reddy's Laboratories Ltd.", "ERIS": "Eris Lifesciences Ltd.", "GLAND": "Gland Pharma Ltd.", "GLAXO": "GlaxoSmithKline Pharmaceuticals Ltd.", "GRANULES": "Granules India Ltd.", "IPCALAB": "Ipca Laboratories Ltd.", "JBCHEPHARM": "J.B. Chemicals & Pharmaceuticals Ltd.", "LAURUSLABS": "Laurus Labs Ltd.", "LUPIN": "Lupin Ltd.", "MANKIND": "Mankind Pharma Ltd.", "MARKSANS": "Marksans Pharma Ltd.", "NATCOPHARM": "Natco Pharma Ltd.", "SUNPHARMA": "Sun Pharmaceutical Industries Ltd.", "TORNTPHARM": "Torrent Pharmaceuticals Ltd.", "ZYDUSLIFE": "Zydus Lifesciences Ltd.",
+            // Railways & Logistics
+            "ALLCARGO": "Allcargo Logistics Ltd.", "BLUEDART": "Blue Dart Express Ltd.", "CONCOR": "Container Corporation of India Ltd.", "GATEWAY": "Gateway Distriparks Ltd.", "IRB": "IRB Infrastructure Developers Ltd.", "IRCON": "IRCON International Ltd.", "IRFC": "Indian Railway Finance Corporation Ltd.", "JWL": "Jupiter Wagons Ltd.", "KEC": "KEC International Ltd.", "RAILTEL": "RailTel Corporation of India Ltd.", "RITES": "RITES Ltd.", "RVNL": "Rail Vikas Nigam Ltd.", "TCI": "Transport Corporation of India Ltd.", "TEXRAIL": "Texmaco Rail & Engineering Ltd.", "TITAGARH": "Titagarh Rail Systems Ltd.",
+            // Real Estate
+            "AJMERA": "Ajmera Realty & Infra India Ltd.", "BRIGADE": "Brigade Enterprises Ltd.", "DLF": "DLF Ltd.", "GODREJPROP": "Godrej Properties Ltd.", "IBREALEST": "Indiabulls Real Estate Ltd.", "LODHA": "Macrotech Developers Ltd. (Lodha)", "MAHLIFE": "Mahindra Lifespace Developers", "OBEROIRLTY": "Oberoi Realty Ltd.", "PHOENIXLTD": "The Phoenix Mills Ltd.", "PRESTIGE": "Prestige Estates Projects", "PURVA": "Puravankara Ltd.", "SOBHA": "Sobha Ltd.", "SUNTECK": "Sunteck Realty Ltd.",
+            // Sugar & Agriculture
+            "AVADHSUGAR": "Avadh Sugar & Energy Ltd.", "BALRAMCHIN": "Balrampur Chini Mills Ltd.", "BANARISUG": "Bannari Amman Sugars Ltd.", "DALMIASUG": "Dalmia Bharat Sugar & Industries", "DHAMPURSUG": "Dhampur Sugar Mills Ltd.", "EIDPARRY": "E.I.D. - Parry (India) Ltd.", "RENUKA": "Shree Renuka Sugars Ltd.", "TRIVENI": "Triveni Engineering & Industries Ltd.",
+            // Telecom & Media
+            "BHARTIARTL": "Bharti Airtel Ltd.", "GTLINFRA": "GTL Infrastructure Ltd.", "HFCL": "HFCL Ltd.", "IDEA": "Vodafone Idea Ltd.", "INDUSTOWER": "Indus Towers Ltd.", "ITI": "ITI Ltd.", "NETWORK18": "Network18 Media & Investments Ltd.", "PVRINOX": "PVR INOX Ltd.", "SAREGAMA": "Saregama India Ltd.", "SUNTV": "Sun TV Network Ltd.", "TIPSMUSIC": "Tips Industries Ltd. (Tips Music)", "ZEEL": "Zee Entertainment Enterprises Ltd.",
+            // Textiles & Apparels
+            "ARVIND": "Arvind Ltd.", "FILATEX": "Filatex India Ltd.", "GOKEX": "Gokaldas Exports Ltd.", "KPRMILL": "K.P.R. Mill Ltd.", "LUXIND": "Lux Industries Ltd.", "NITINSPIN": "Nitin Spinners Ltd.", "PAGEIND": "Page Industries Ltd.", "RAYMOND": "Raymond Ltd.", "RUPA": "Rupa & Company Ltd.", "SANGAMIND": "Sangam (India) Ltd.", "TRIDENT": "Trident Ltd.",
+            // Tyres & Rubber
+            "APOLLOTYRE": "Apollo Tyres Ltd.", "CEATLTD": "CEAT Ltd.", "GOODYEAR": "Goodyear India Ltd.", "JKTYRE": "JK Tyre & Industries Ltd.", "MRF": "MRF Ltd.", "TVSSRICHAK": "TVS Srichakra Ltd."
+        };
+
+        // --- Globals & Constants ---
+        const API_URL = 'http://127.0.0.1:16000/api/prices'; 
+        const LOCAL_STORAGE_CURRENT_USER_ID_KEY = 'mockStockCurrentUserId';
+        const LOCAL_STORAGE_WATCHLIST_PREFIX = 'mockStockWatchlist_';
+        const LOCAL_STORAGE_PORTFOLIO_PREFIX = 'mockStockPortfolio_';
+
+        let currentUserId = null;
+        let currentWatchlist = [];
+        let currentPortfolio = { cashBalance: 100000, holdings: [], transactions: [], realizedPL: 0 }; 
+        
+        let currentFilter = "All"; 
+        let currentSearchQuery = "";
+        let currentTab = "trading"; 
+        let updatePricesIntervalId = null;
+        let firstLoad = true;
+
+        let allocationChartInstance = null;
+        let timelineChartInstance = null;
+
+        // --- SMART STATE MAPS (Dynamically loaded via API) ---
+        let discoveredCategories = [];
+        let allStocksFlattened = [];
+        let stockMap = {};
+
+        const getEl = (id) => document.getElementById(id);
+        const formatINR = (val) => `₹${Number(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        
+        const setSignedClass = (el, value) => {
+            if (!el) return;
+            el.classList.remove('positive', 'negative', 'text-gray-900');
+            if (value > 0) {
+                el.classList.add('positive'); 
+            } else if (value < 0) {
+                el.classList.add('negative'); 
+            } else {
+                el.classList.add('text-gray-900'); 
+            }
+        };
+
+        // --- Auth & Data Handling ---
+        async function loadUserData(userId) {
+            try {
+                // Load Watchlist settings from local persistence 
+                const wl = JSON.parse(localStorage.getItem(LOCAL_STORAGE_WATCHLIST_PREFIX + userId));
+                if (wl) currentWatchlist = wl;
+
+                // 1. Fetch live single-user profile variables from /api/history
+                const profileResponse = await fetch(`http://127.0.0.1:16000/api/history?username=${encodeURIComponent(userId)}`);
+                if (profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    
+                    // Map JSON properties coming from PortfolioSummary struct
+                    currentPortfolio.cashBalance = profileData.remaining_cash ?? 100000;
+                    currentPortfolio.realizedPL = profileData.realized_p_l ?? 0;
+                    
+                    // Parse the active_holdings object map into our local holdings array
+                    if (profileData.active_holdings) {
+                        currentPortfolio.holdings = Object.entries(profileData.active_holdings).map(([ticker, details]) => ({
+                            stockId: ticker,
+                            quantity: parseInt(details.quantity || 0),
+                            averagePrice: parseFloat(details.average_buy_price || 0)
+                        }));
+                    } else {
+                        currentPortfolio.holdings = [];
+                    }
+                } else {
+                    console.warn("User has no live ledger history records yet; falling back to local defaults.");
+                    const pf = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PORTFOLIO_PREFIX + userId));
+                    if (pf) {
+                        currentPortfolio = { ...currentPortfolio, ...pf };
+                    }
+                }
+
+                // 2. Fetch structural transaction history log 
+                const response = await fetch(`http://127.0.0.1:16000/api/transactions?username=${encodeURIComponent(userId)}`);
+                if (response.ok) {
+                    const serverTransactions = await response.json();
+                    if (Array.isArray(serverTransactions)) {
+                        currentPortfolio.transactions = serverTransactions.map(t => ({
+                            timestamp: t.time || "00:00:00",
+                            type: t.action || "",
+                            stockId: t.stock || "",
+                            quantity: t.quantity || 0,
+                            price: t.price_per_stock || 0,
+                            pl: t.total_price || "0.00"
+                        }));
+                    }
+                }
+                
+                // Refresh UI components immediately after gathering data
+                updatePortfolioDisplay();
+                
+            } catch (e) { 
+                console.error("Error matching or parsing user data metrics:", e); 
+            }
+        }
+
+        async function handleLogin() {
+            const u = getEl('login-username').value.trim();
+            const p = getEl('login-password').value;
+            const errNode = getEl('login-error');
+
+            if (!u || !p) {
+                errNode.textContent = 'Please populate both Username and Password vectors.';
+                errNode.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:16000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    // Instantly flush transient cache properties to prevent dirty identity mixing
+                    localStorage.removeItem(LOCAL_STORAGE_CURRENT_USER_ID_KEY);
+                    
+                    // Reinitialize cleanly
+                    currentPortfolio = { cashBalance: 100000, holdings: [], transactions: [], realizedPL: 0 };
+                    currentWatchlist = [];
+                    currentUserId = u;
+                    
+                    // Save active session structural token
+                    localStorage.setItem(LOCAL_STORAGE_CURRENT_USER_ID_KEY, u);
+                    
+                    // Fetch all upstream database vectors before drawing the user environment interface
+                    await loadUserData(u); 
+                    
+                    // Flush calculated structures down to secondary safe arrays & load screen grids
+                    saveUserData(u);
+                    showMainApp();
+                } else {
+                    errNode.textContent = result.message || 'Invalid credentials verified.';
+                    errNode.style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Critical identity sync error:", error);
+                errNode.textContent = 'Network verification error. Cannot resolve connection to backend gateway.';
+                errNode.style.display = 'block';
+            }
+        }
+
+        function saveUserData(userId) {
+            localStorage.setItem(LOCAL_STORAGE_WATCHLIST_PREFIX + userId, JSON.stringify(currentWatchlist));
+            localStorage.setItem(LOCAL_STORAGE_PORTFOLIO_PREFIX + userId, JSON.stringify(currentPortfolio));
+        }
+
+        function handleAnonymousSignIn() {
+            currentUserId = 'guest_' + Date.now();
+            localStorage.setItem(LOCAL_STORAGE_CURRENT_USER_ID_KEY, currentUserId);
+            saveUserData(currentUserId);
+            showMainApp();
+        }
+
+        function handleLogout() {
+            stopPriceUpdates();
+            localStorage.clear();
+            currentUserId = null;
+            currentPortfolio = { cashBalance: 100000, holdings: [], transactions: [], realizedPL: 0 };
+            currentWatchlist = [];
+            firstLoad = true;
+
+            getEl('login-username').value = '';
+            getEl('login-password').value = '';
+            getEl('login-error').style.display = 'none';
+            
+            getEl('top-bar').classList.add('hidden');
+            getEl('trading-section').classList.add('hidden');
+            getEl('analytics-section').classList.add('hidden');
+            getEl('login-page').style.display = 'flex';
+            document.body.style.alignItems = 'center';
+        }
+
+        function showMainApp() {
+            getEl('login-page').style.display = 'none';
+            document.body.style.alignItems = 'flex-start';
+            getEl('top-bar').classList.remove('hidden');
+            getEl('user-id-display-text').textContent = currentUserId;
+            
+            switchTab('trading');
+            startPriceUpdates();
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            
+            // Reset all tabs
+            ['trading', 'analytics'].forEach(tab => {
+                const btn = getEl(`tab-${tab}`);
+                const sec = getEl(`${tab}-section`);
+                if(btn) btn.classList.remove('active');
+                if(sec) sec.classList.add('hidden');
+            });
+
+            // Activate selected tab
+            const activeBtn = getEl(`tab-${tabId}`);
+            const activeSec = getEl(`${tabId}-section`);
+            if(activeBtn) activeBtn.classList.add('active');
+            if(activeSec) activeSec.classList.remove('hidden');
+
+            // Trigger tab-specific logic
+            if (tabId === 'trading') {
+                if (!firstLoad) {
+                    renderFilterButtons();
+                    renderStockCards(currentFilter);
+                    updatePortfolioDisplay();
+                }
+            } else if (tabId === 'analytics') {
+                processAnalyticsData();
+                buildAdvancedCharts();
+            } else if (tabId === 'charts') {
+                populateChartSidebar(getEl('chart-search-input').value);
+            }
+        }
+
+        let currentChartStock = null;
+
+        function populateChartSidebar(searchQuery = "") {
+            const listContainer = getEl('chart-stock-list');
+            if (!listContainer) return;
+
+            const query = searchQuery.trim().toLowerCase();
+            // Assuming 'allStocksFlattened' has a 'category' property
+            let filtered = allStocksFlattened.filter(s => 
+                !query || s.symbol.toLowerCase().includes(query) || s.name.toLowerCase().includes(query)
+            );
+
+            // Grouping by category
+            const grouped = filtered.reduce((acc, stock) => {
+                (acc[stock.category] = acc[stock.category] || []).push(stock);
+                return acc;
+            }, {});
+
+            listContainer.innerHTML = Object.keys(grouped).sort().map(category => `
+                <div class="mb-4">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">${category}</h4>
+                    <div class="flex flex-col gap-1">
+                        ${grouped[category].map(stock => `
+                            <button class="text-left w-full p-2 rounded-lg border border-gray-100 transition-all ${currentChartStock === stock.id ? 'bg-[#004275] text-white border-[#004275]' : 'bg-white hover:bg-blue-50'}" onclick="loadChart('${stock.id}')">
+                                <div class="font-bold text-sm">${stock.symbol}</div>
+                                <div class="text-[10px] truncate ${currentChartStock === stock.id ? 'text-gray-200' : 'text-gray-500'}">${stock.name}</div>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- SAFELY WRAP ELECTRON INTEGRATION TO PREVENT WEBSITE LOGIN CRASHES ---
+        let ipcRenderer = null;
+        if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
+            try {
+                ipcRenderer = require('electron').ipcRenderer;
+            } catch (e) {
+                console.warn("Electron IPC platform fallback executed:", e);
+            }
+        }
+
+        function loadChart(symbol) {
+            if (!symbol) return;
+            
+            console.log("Requesting chart view for:", symbol);
+            
+            // Check if we are running inside the Electron Desktop App shell
+            if (ipcRenderer) {
+                // Instruct the desktop engine to spawn your perfect working top-level window
+                ipcRenderer.send('open-chart-window', symbol);
+            } else {
+                // Fallback for your website deployment so standard browsers open a clean web tab instead of freezing
+                window.open(`https://www.tradingview.com/chart/?symbol=NSE:${symbol.toUpperCase()}`, '_blank');
+            }
+        }
+
+        function openChartFromMarket(symbol) {
+            if (!symbol) return;
+            
+            console.log("Market card selection captured:", symbol);
+            
+            loadChart(symbol);
+        }
+
+        // --- SMART PRICING LOADER ENGINE ---
+        async function updatePrices() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                const fetchedStocks = data.stocks || {};
+
+                // Map state automatically from payload structure on first handshake
+                if (firstLoad || allStocksFlattened.length === 0) {
+                    allStocksFlattened = [];
+                    stockMap = {};
+                    discoveredCategories = Object.keys(fetchedStocks);
+
+                    discoveredCategories.forEach(category => {
+                        Object.entries(fetchedStocks[category]).forEach(([sym, priceValue]) => {
+                            const companyRealName = NSE_COMPANY_NAMES[sym] || sym.replace(/-(.)/g, ' $1');
+                            const stock = {
+                                id: sym, 
+                                symbol: sym, 
+                                name: companyRealName,
+                                category: category, 
+                                price: parseFloat(priceValue), 
+                                initialPrice: parseFloat(priceValue)
+                            };
+                            allStocksFlattened.push(stock);
+                            stockMap[sym] = stock;
+                        });
+                    });
+                } else {
+                    // Update prices smoothly on regular ticker intervals
+                    allStocksFlattened.forEach(stock => {
+                        const catStocks = fetchedStocks[stock.category];
+                        if (catStocks && catStocks[stock.id] !== undefined) {
+                            const newPrice = parseFloat(catStocks[stock.id]);
+                            stock.initialPrice = (stock.price !== 0) ? stock.price : newPrice;
+                            stock.price = newPrice;
+                        }
+                    });
+                }
+
+                if (currentTab === 'trading') {
+                    if (firstLoad) {
+                        renderFilterButtons();
+                        renderStockCards(currentFilter);
+                        firstLoad = false;
+                    } else {
+                        updateLiveElements();
+                        updatePortfolioDisplay();
+                    }
+                }
+            } catch (e) { console.error("Market data dynamic discovery failed", e); }
+        }
+        function startPriceUpdates() { if (!updatePricesIntervalId) updatePricesIntervalId = setInterval(updatePrices, 3000); updatePrices(); }
+        function stopPriceUpdates() { clearInterval(updatePricesIntervalId); updatePricesIntervalId = null; }
+
+        // --- Trading UI Logic ---
+        function renderStockCards(filter) {
+            const container = getEl('stock-grid-trader');
+            if(!container) return;
+            
+            const query = currentSearchQuery.trim().toLowerCase();
+            let filtered = allStocksFlattened.filter(s => {
+                const matchesFilter = filter === "All" || (filter === "Watchlist" && currentWatchlist.includes(s.id)) || s.category === filter;
+                const matchesSearch = !query || s.symbol.toLowerCase().includes(query) || s.name.toLowerCase().includes(query) || s.category.toLowerCase().includes(query);
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<li class="stock-item"><div class="stock-name">No matching stocks</div><div class="text-sm text-gray-500 mt-2">Try another search or category.</div></li>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(stock => {
+                const diff = stock.price - stock.initialPrice;
+                const isAdded = currentWatchlist.includes(stock.id);
+                const holding = currentPortfolio.holdings.find(h => h.stockId === stock.id);
+                const holdingPL = holding ? (stock.price - holding.averagePrice) * holding.quantity : 0;
+                
+                return `
+                    <li class="stock-item flex flex-col justify-between" data-stock-id="${stock.id}">
+                        <div>
+                            <div class="flex justify-between items-start gap-3 mb-3">
+                                <span class="stock-name font-semibold text-gray-900 text-base leading-tight">${stock.name}</span>
+                                <span class="stock-symbol bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider flex-shrink-0 border border-blue-100">${stock.symbol}</span>
+                            </div>
+                            <div class="stock-price-container">
+                                <span class="stock-price">${formatINR(stock.price)}</span>
+                                <span class="change-value ${diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'text-gray-900'}">${formatINR(diff)}</span>
+                            </div>
+                            ${holding ? `
+                                <div class="holding-strip">
+                                    <span>${holding.quantity} owned</span>
+                                    <span>Avg: ${formatINR(holding.averagePrice)}</span>
+                                    <span class="${holdingPL > 0 ? 'positive' : holdingPL < 0 ? 'negative' : 'text-gray-900'}">${formatINR(holdingPL)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="stock-actions pt-2 mt-auto">
+                            <button class="buy-btn" onclick="openTransactionModal('buy', '${stock.id}')">Buy</button>
+                            ${holding ? `<button class="sell-btn" onclick="openTransactionModal('sell', '${stock.id}')">Sell</button>` : ''}
+                            <button class="add-to-watchlist-btn ${isAdded ? 'added' : ''}" onclick="toggleWatchlist('${stock.id}')">${isAdded ? 'Watching' : 'Watchlist'}</button>
+                            <button class="flex items-center justify-center bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 rounded-[10px] p-2 ml-auto transition-all" onclick="openChartFromMarket('${stock.id}')" title="View Chart">
+                                Chart
+                            </button>
+                        </div>
+                    </li>`;
+            }).join('');
+        }
+
+        function updateLiveElements() {
+            allStocksFlattened.forEach(stock => {
+                const card = document.querySelector(`.stock-item[data-stock-id="${stock.id}"]`);
+                if (!card) return;
+
+                const pEl = card.querySelector('.stock-price');
+                const cEl = card.querySelector('.change-value');
+                
+                const diff = stock.price - stock.initialPrice;
+                
+                if (pEl) pEl.textContent = formatINR(stock.price);
+                
+                if (cEl) {
+                    cEl.textContent = formatINR(diff);
+                    cEl.className = `change-value ${diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'text-gray-900'}`;
+                }
+
+                card.classList.remove('glow-positive', 'glow-negative');
+                if (Math.abs(diff) > 0.01) {
+                    card.classList.add(diff > 0 ? 'glow-positive' : 'glow-negative');
+                }
+            });
+        }
+
+        function renderFilterButtons() {
+            const cats = ["All", ...discoveredCategories];
+            const container = getEl('category-filter-trader');
+            if(container) {
+                container.innerHTML = cats.map(c => `<button class="category-button ${c === currentFilter ? 'active' : ''}" onclick="setFilter('${c}')">${c}</button>`).join('');
+            }
+            const watchlistButton = getEl('watchlist-filter-button');
+            const watchlistCount = getEl('watchlist-count');
+            if (watchlistButton) watchlistButton.classList.toggle('active', currentFilter === 'Watchlist');
+            if (watchlistCount) watchlistCount.textContent = `${currentWatchlist.length} saved`;
+        }
+
+        function setFilter(f) { currentFilter = f; renderFilterButtons(); renderStockCards(f); }
+
+        // --- Summary Block Logic ---
+        function updatePortfolioDisplay() {
+            let invested = 0, current = 0;
+            currentPortfolio.holdings.forEach(h => {
+                const s = stockMap[h.stockId];
+                invested += h.quantity * h.averagePrice;
+                current += h.quantity * (s ? s.price : h.averagePrice);
+            });
+            getEl('portfolio-cash').textContent = formatINR(currentPortfolio.cashBalance);
+            getEl('portfolio-invested').textContent = formatINR(invested);
+            getEl('portfolio-current-value').textContent = formatINR(current);
+            
+            const unrealizedPL = current - invested;
+            const totalPL = unrealizedPL + currentPortfolio.realizedPL;
+            
+            getEl('portfolio-overall-profit-loss').textContent = formatINR(unrealizedPL);
+            getEl('portfolio-total-profit-loss').textContent = formatINR(totalPL);
+            
+            setSignedClass(getEl('portfolio-overall-profit-loss'), unrealizedPL);
+            setSignedClass(getEl('portfolio-total-profit-loss'), totalPL);
+        }
+
+        // --- Transaction Modals ---
+        let modalStock = null, modalType = '';
+        function openTransactionModal(type, id) {
+            modalStock = stockMap[id]; modalType = type;
+            getEl('modal-title').textContent = `${type.toUpperCase()} ${modalStock.symbol}`;
+            getEl('modal-stock-info').textContent = `Current Price: ${formatINR(modalStock.price)}`;
+            
+            const h = currentPortfolio.holdings.find(x => x.stockId === modalStock.id);
+            getEl('modal-shares-owned').textContent = h ? `You own: ${h.quantity} shares` : 'You own: 0 shares';
+
+            getEl('quantity-input').value = 1;
+            getEl('confirm-transaction-button').textContent = type.toUpperCase();
+            getEl('transaction-modal-overlay').classList.add('active');
+        }
+
+        function closeTransactionModal() { getEl('transaction-modal-overlay').classList.remove('active'); }
+
+        function setMaxQuantity() {
+            if (modalType === 'buy') getEl('quantity-input').value = Math.floor(currentPortfolio.cashBalance / modalStock.price);
+            else {
+                const h = currentPortfolio.holdings.find(x => x.stockId === modalStock.id);
+                getEl('quantity-input').value = h ? h.quantity : 0;
+            }
+        }
+
+        async function confirmTransaction() {
+            const q = parseInt(getEl('quantity-input').value);
+            const modalMessage = getEl('modal-message');
+            
+            modalMessage.textContent = "";
+
+            if (isNaN(q) || q <= 0) {
+                modalMessage.textContent = "Please enter a valid quantity.";
+                return;
+            }
+            
+            const cost = q * modalStock.price;
+
+            if (modalType === 'buy' && cost > currentPortfolio.cashBalance) {
+                modalMessage.textContent = "Insufficient funds for this transaction.";
+                return;
+            }
+
+            const timestamp = new Date().toLocaleTimeString('en-GB', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            const transactionData = {
+                user: currentUserId,
+                action: modalType.toUpperCase(),
+                stock: modalStock.id,
+                quantity: q,
+                price_per_stock: parseFloat(modalStock.price),
+                total_price: parseFloat(cost.toFixed(2)),
+                timestamp: timestamp
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:16000/api/transaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(transactionData)
+                });
+
+                if (response.ok) {
+                    let pL = 0;
+
+                    if (modalType === 'buy') {
+                        currentPortfolio.cashBalance -= cost;
+                        let h = currentPortfolio.holdings.find(x => x.stockId === modalStock.id);
+                        if (h) {
+                            h.averagePrice = ((h.quantity * h.averagePrice) + cost) / (h.quantity + q);
+                            h.quantity += q;
+                        } else {
+                            currentPortfolio.holdings.push({ stockId: modalStock.id, quantity: q, averagePrice: modalStock.price });
+                        }
+                    } else {
+                        let h = currentPortfolio.holdings.find(x => x.stockId === modalStock.id);
+                        if (!h || h.quantity < q) {
+                            modalMessage.textContent = "Not enough shares owned.";
+                            return;
+                        }
+                        pL = (modalStock.price - h.averagePrice) * q;
+                        currentPortfolio.realizedPL += pL;
+                        currentPortfolio.cashBalance += cost;
+                        h.quantity -= q;
+                        if (h.quantity === 0) currentPortfolio.holdings = currentPortfolio.holdings.filter(x => x.stockId !== modalStock.id);
+                    }
+
+                    currentPortfolio.transactions.push({ 
+                        timestamp: transactionData.timestamp, 
+                        type: transactionData.action, 
+                        stockId: transactionData.stock, 
+                        quantity: q, 
+                        price: transactionData.price_per_stock, 
+                        pl: modalType === 'sell' ? pL.toFixed(2) : "0.00"
+                    });
+
+                    saveUserData(currentUserId);
+                    updatePortfolioDisplay();
+                    renderStockCards(currentFilter);
+                    closeTransactionModal();
+                    syncTotalPL();
+                } else {
+                    modalMessage.textContent = "Server error. Please try again.";
+                }
+            } catch (error) {
+                modalMessage.textContent = "Connection error.";
+            }
+        }
+
+        // --- Analytics UI Logic ---
+        function processAnalyticsData() {
+            getEl('kpi-cash').textContent = formatINR(currentPortfolio.cashBalance);
+            
+            let totalInvestedAmount = 0;
+            let currentPortfolioValue = 0;
+
+            currentPortfolio.holdings.forEach(h => {
+                const livePrice = stockMap[h.stockId] ? stockMap[h.stockId].price : h.averagePrice;
+                totalInvestedAmount += (h.quantity * h.averagePrice);
+                currentPortfolioValue += (h.quantity * livePrice);
+            });
+
+            getEl('kpi-invested').textContent = formatINR(totalInvestedAmount);
+            getEl('kpi-current').textContent = formatINR(currentPortfolioValue);
+
+            const unrealizedPL = currentPortfolioValue - totalInvestedAmount;
+            const overallNode = getEl('kpi-overall');
+            overallNode.textContent = formatINR(unrealizedPL);
+            
+            let overallColor = 'text-gray-900'; 
+            if (unrealizedPL > 0) {
+                overallColor = 'text-[#148a4f]'; 
+            } else if (unrealizedPL < 0) {
+                overallColor = 'text-[#d64545]'; 
+            }
+            overallNode.className = `text-2xl font-extrabold ${overallColor}`;
+
+            const realizedNode = getEl('kpi-realized');
+            realizedNode.textContent = formatINR(currentPortfolio.realizedPL);
+            
+            let realizedColor = 'text-gray-900'; 
+            if (currentPortfolio.realizedPL > 0) {
+                realizedColor = 'text-[#148a4f]'; 
+            } else if (currentPortfolio.realizedPL < 0) {
+                realizedColor = 'text-[#d64545]'; 
+            }
+            realizedNode.className = `text-2xl font-extrabold ${realizedColor}`;
+
+            const rowsTarget = getEl('transaction-log-rows');
+            const logs = currentPortfolio.transactions || [];
+            getEl('trade-count').textContent = `${logs.length} trade${logs.length === 1 ? '' : 's'}`;
+
+            if(logs.length === 0) {
+                rowsTarget.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-sm text-gray-400">No ledger entries saved yet.</td></tr>`;
+                return;
+            }
+
+            rowsTarget.innerHTML = [...logs].reverse().map(t => {
+                let badgeClass = t.type === 'BUY' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200';
+                let impactVal = parseFloat(t.pl || 0);
+                
+                let impactClass = 'text-gray-900';
+                if (impactVal > 0) impactClass = 'text-[#148a4f]';
+                else if (impactVal < 0) impactClass = 'text-[#d64545]';
+                
+                return `
+                    <tr class="hover:bg-gray-50/60 transition-colors">
+                        <td class="py-3.5 text-gray-500 font-normal">${t.timestamp}</td>
+                        <td class="py-3.5 text-gray-900 font-bold tracking-tight">${t.stockId}</td>
+                        <td class="py-3.5"><span class="text-xs px-2 py-0.5 rounded font-bold border ${badgeClass}">${t.type}</span></td>
+                        <td class="py-3.5 font-semibold text-gray-600">${t.quantity}</td>
+                        <td class="py-3.5 text-gray-800">${formatINR(t.price)}</td>
+                        <td class="py-3.5 text-right font-bold ${t.type === 'SELL' ? impactClass : 'text-gray-400'}">
+                            ${t.type === 'SELL' ? (impactVal > 0 ? '+' : '') + formatINR(impactVal) : '—'}
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function buildAdvancedCharts() {
+            if(allocationChartInstance) allocationChartInstance.destroy();
+            if(timelineChartInstance) timelineChartInstance.destroy();
+
+            const holdLabels = [];
+            const holdValues = [];
+            currentPortfolio.holdings.forEach(h => {
+                const livePrice = stockMap[h.stockId] ? stockMap[h.stockId].price : h.averagePrice;
+                holdLabels.push(h.stockId);
+                holdValues.push(h.quantity * livePrice);
+            });
+
+            if(holdValues.length > 0) {
+                getEl('no-assets-message').classList.add('hidden');
+                allocationChartInstance = new Chart(getEl('allocationChart').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: holdLabels,
+                        datasets: [{ 
+                            data: holdValues, 
+                            backgroundColor: ['#004275', '#f4c430', '#148a4f', '#d64545', '#17a2b8', '#6c757d'], 
+                            borderWidth: 2, 
+                            borderColor: '#ffffff' 
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, cutout: '75%' }
+                });
+            } else {
+                getEl('no-assets-message').classList.remove('hidden');
+            }
+
+            const ctxTimeline = getEl('timelineChart').getContext('2d');
+            const lineLabels = ['Start'];
+            const lineData = [0];
+            let cumulativePL = 0;
+
+            (currentPortfolio.transactions || []).filter(t => t.type === 'SELL').forEach((t, i) => {
+                cumulativePL += parseFloat(t.pl || 0);
+                lineLabels.push(`Trade ${i+1}`);
+                lineData.push(cumulativePL);
+            });
+
+            if(lineData.length <= 1) { lineLabels.push('Horizon Active'); lineData.push(0); }
+
+            const gradient = ctxTimeline.createLinearGradient(0, 0, 0, 260);
+            gradient.addColorStop(0, 'rgba(0, 66, 117, 0.25)');
+            gradient.addColorStop(1, 'rgba(0, 66, 117, 0.0)');
+
+            timelineChartInstance = new Chart(ctxTimeline, {
+                type: 'line',
+                data: {
+                    labels: lineLabels,
+                    datasets: [{ data: lineData, borderColor: '#004275', borderWidth: 3, pointBackgroundColor: '#ffffff', pointBorderColor: '#004275', tension: 0.2, fill: true, backgroundColor: gradient }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { grid: { color: 'rgba(0,0,0,0.04)' } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
+        function toggleWatchlist(id) {
+            currentWatchlist = currentWatchlist.includes(id) ? currentWatchlist.filter(x => x !== id) : [...currentWatchlist, id];
+            saveUserData(currentUserId);
+            renderFilterButtons();
+            renderStockCards(currentFilter);
+        }
+
+        function exportPortfolioToCSV() {
+            if (!currentPortfolio.transactions || currentPortfolio.transactions.length === 0) {
+                alert("Make transaction(s) to export your portfolio.");
+                return;
+            }
+
+            let csvContent = "Time,Type,Stock,Quantity,Price,Profit/Loss\n";
+            csvContent += currentPortfolio.transactions.map(t => 
+                `${t.timestamp},${t.type},${t.stockId},${t.quantity},${t.price.toFixed(2)},${t.pl}`
+            ).join("\n");
+            csvContent += `\n\nTotal Profit/Loss,,,,₹${currentPortfolio.realizedPL.toFixed(2)}`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${currentUserId}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function syncTotalPL() {
+            if (!currentUserId) return;
+            let invested = 0, currentVal = 0;
+            currentPortfolio.holdings.forEach(h => {
+                const s = stockMap[h.stockId];
+                invested += h.quantity * h.averagePrice;
+                currentVal += h.quantity * (s ? s.price : h.averagePrice);
+            });
+            const totalPL = (currentVal - invested) + currentPortfolio.realizedPL;
+
+            try {
+                await fetch('http://127.0.0.1:16000/api/sync-tpl', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUserId, total_profit_loss: totalPL })
+                });
+            } catch (e) { console.error("Failed to sync leaderboard", e); }
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            getEl('login-button').onclick = handleLogin;
+            getEl('anonymous-sign-in').onclick = handleAnonymousSignIn;
+            getEl('logout-button').onclick = handleLogout;
+            getEl('confirm-transaction-button').onclick = confirmTransaction;
+            getEl('cancel-transaction-button').onclick = closeTransactionModal;
+            getEl('max-quantity-button').onclick = setMaxQuantity;
+            getEl('export-portfolio-button').onclick = exportPortfolioToCSV;
+            
+            getEl('stock-search-input').oninput = (event) => {
+                currentSearchQuery = event.target.value;
+                renderStockCards(currentFilter);
+            };
+            getEl('watchlist-filter-button').onclick = () => setFilter('Watchlist');
+            
+            const savedSessionUser = localStorage.getItem(LOCAL_STORAGE_CURRENT_USER_ID_KEY);
+            if (savedSessionUser) { 
+                currentUserId = savedSessionUser; 
+                loadUserData(savedSessionUser); 
+                showMainApp(); 
+            } else {
+                getEl('login-page').style.display = 'flex';
+                document.body.style.alignItems = 'center';
+            }
+            const chartSearch = getEl('chart-search-input');
+            if (chartSearch) {
+                chartSearch.addEventListener('input', (event) => populateChartSidebar(event.target.value));
+            }
+        });
+    </script>
+</body>
+</html>
