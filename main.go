@@ -738,8 +738,6 @@ func syncTotalPL(w http.ResponseWriter, r *http.Request) {
 
 // --- Core Initialization & Server Lifecycle ---
 
-// --- Core Initialization & Server Lifecycle ---
-
 func main() {
 	var err error
 
